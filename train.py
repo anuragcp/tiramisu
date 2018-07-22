@@ -17,25 +17,31 @@ print(fnames[0:3])
 print(lnames[0:3])
 def open_image(fn): return np.array(Image.open(fn).resize(img_sz, Image.NEAREST))
 #img = Image.open(fnames[0]).resize(img_sz, Image.NEAREST)
+
 imgs = np.stack([open_image(fn) for fn in fnames])
 labels = np.stack([open_image(fn) for fn in lnames])
 print(imgs.shape,labels.shape)
 
 # write image and label vlaues into a file
 with open('imgs.bc', 'w') as file:
-	file.write(np.ndarray(imgs))
+    file.write(np.ndarray(imgs))
 
 with open('labels.bc', 'w') as file:
-        file.write(np.ndarray(labels))
+    file.write(np.ndarray(labels))
 
-"""
-imgs = load_array(PATH+'results/imgs.bc')
-labels = load_array(PATH+'results/labels.bc')
+#read image and lable from the file
+with open('imgs.bc', 'r') as file:
+    imgs = file.read()
+    print("imgs loaded")
 
+with open('imgs.bc', 'r') as file:
+    labels = file.read()
+    print("label restored")
 #standardize
 imgs-=0.4
 imgs/=0.3
 
+"""
 
 class BatchIndices(object):
     def __init__(self, n, bs, shuffle=False):
