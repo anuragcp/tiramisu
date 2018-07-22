@@ -6,6 +6,7 @@ from concurrent.futures import ProcessPoolExecutor
 import glob
 from PIL import Image
 import os
+import pickle
 
 frames_path = './datasets/frames/'
 labels_path = './datasets/labels/'
@@ -20,9 +21,14 @@ imgs = np.stack([open_image(fn) for fn in fnames])
 labels = np.stack([open_image(fn) for fn in lnames])
 print(imgs.shape,labels.shape)
 
+# write image and label vlaues into a file
+with open('imgs.bc', 'w') as file:
+	file.write(np.ndarray(imgs))
+
+with open('labels.bc', 'w') as file:
+        file.write(np.ndarray(labels))
+
 """
-save_array(PATH+'results/imgs.bc', imgs)
-save_array(PATH+'results/labels.bc', labels)
 imgs = load_array(PATH+'results/imgs.bc')
 labels = load_array(PATH+'results/labels.bc')
 
