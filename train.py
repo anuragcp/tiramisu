@@ -5,18 +5,22 @@ import threading
 from concurrent.futures import ProcessPoolExecutor
 import glob
 from PIL import Image
+import os
 
-frames_path = '../datasets/frame/'
-labels_path = '../datasets/labels/'
-fnames = glob.glob(frames_path+'*.png')
-lnames = [labels_path+os.path.basename(fn)[:-4]+'_L.png' for fn in fnames]
+frames_path = './datasets/frames/'
+labels_path = './datasets/labels/'
+fnames = glob.glob(frames_path+'*.jpg')
+lnames = [labels_path+os.path.basename(fn)[:-4]+'.png' for fn in fnames]
 img_sz = (480,360)
-
+print(fnames[0:3])
+print(lnames[0:3])
 def open_image(fn): return np.array(Image.open(fn).resize(img_sz, Image.NEAREST))
 #img = Image.open(fnames[0]).resize(img_sz, Image.NEAREST)
 imgs = np.stack([open_image(fn) for fn in fnames])
 labels = np.stack([open_image(fn) for fn in lnames])
 print(imgs.shape,labels.shape)
+
+"""
 save_array(PATH+'results/imgs.bc', imgs)
 save_array(PATH+'results/labels.bc', labels)
 imgs = load_array(PATH+'results/imgs.bc')
@@ -121,3 +125,4 @@ b_img, b_label = next(sg)
 plt.imshow(b_img[0]*0.3+0.4);
 
 plt.imshow(b_label[0].reshape(224,224,3));
+"""
