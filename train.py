@@ -169,6 +169,7 @@ plt.imshow(b_label[0].reshape(224, 224));
 print(b_label[0])
 
 # preparing test set
+"""
 fn_test = set(o.strip() for o in open('test.txt', 'r'))
 is_test = np.array([o.split('/')[-1] in fn_test for o in fnames])
 trn = imgs[is_test == False]
@@ -178,7 +179,7 @@ test_labels = labels_int[is_test]
 print(trn.shape, test_labels.shape)
 rnd_trn = len(trn_labels)
 rnd_test = len(test_labels)
-
+"""
 
 # tiramisu network
 
@@ -280,15 +281,16 @@ input_shape = (224,224,3)
 img_input = Input(shape=input_shape)
 x = create_tiramisu(12, img_input, nb_layers_per_block=[4,5,7,10,12,15], p=0.2, wd=1e-4)
 model = Model(img_input, x)
-gen = segm_generator(trn, trn_labels, 3, train=True)
-gen_test = segm_generator(test, test_labels, 3, train=False)
+gen = segm_generator(imgs, labels, 3, train=True)
+#gen_test = segm_generator(test, test_labels, 3, train=False)
 model.compile(loss='sparse_categorical_crossentropy',
               optimizer=keras.optimizers.RMSprop(1e-3), metrics=["accuracy"])
 model.optimizer=keras.optimizers.RMSprop(1e-3, decay=1-0.99995)
 model.optimizer=keras.optimizers.RMSprop(1e-3)
 K.set_value(model.optimizer.lr, 1e-3)
-model.fit_generator(gen, rnd_trn, 100, verbose=2,
-                    validation_data=gen_test, nb_val_samples=rnd_test)
+model.fit_generator(gen, len(labels), 100, verbose=2)
+
+#validation_data=gen_test, nb_val_samples=rnd_test
 
 
 
