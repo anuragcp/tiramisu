@@ -4,9 +4,11 @@ import numpy as np
 import threading
 from concurrent.futures import ProcessPoolExecutor
 import glob
+import random
 from PIL import Image
 import os
 import pickle
+import cv2 as cv
 
 frames_path = './datasets/frames/'
 labels_path = './datasets/labels/'
@@ -16,11 +18,13 @@ img_sz = (480,360)
 print(fnames[0:3])
 print(lnames[0:3])
 def open_image(fn): return np.array(Image.open(fn).resize(img_sz, Image.NEAREST))
-#img = Image.open(fnames[0]).resize(img_sz, Image.NEAREST)
-
+img = Image.open(fnames[0]).resize(img_sz, Image.NEAREST)
+#Image._show(img)
 imgs = np.stack([open_image(fn) for fn in fnames])
 labels = np.stack([open_image(fn) for fn in lnames])
 print(imgs.shape,labels.shape)
+n = len(labels)
+r,c = img.size
 
 # write image and label vlaues into a file
 with open('imgs.pickle', 'wb') as pickle_out:
@@ -137,4 +141,7 @@ sg = segm_generator(imgs, labels, 4, train=True)
 b_img, b_label = next(sg)
 plt.imshow(b_img[0]*0.3+0.4);
 
-plt.imshow(b_label[0].reshape(224,224,3));
+plt.imshow(b_label[0].reshape(224,224));
+
+cv.imshow
+
