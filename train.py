@@ -31,18 +31,16 @@ with open('labels.pickle', 'wb') as pickle_out:
 
 #read image and lable from the file
 with open('imgs.pickle','rb') as pickle_in:
-    pickle.load(pickle_in)
+    imgs = pickle.load(pickle_in)
 
 with open('labels.pickle', 'rb') as pickle_in:
-    pickle.load(pickle_in)
+    labels = pickle.load(pickle_in)
 
 print("pickle part completed")
 print(type(imgs))
 #standardize
 #imgs-=0.4
 #imgs/=0.3
-
-"""
 
 class BatchIndices(object):
     def __init__(self, n, bs, shuffle=False):
@@ -122,15 +120,17 @@ def conv_all_labels():
     ex = ProcessPoolExecutor(8)
     return np.stack(ex.map(conv_one_label, range(n)))
 
-%time labels_int =conv_all_labels()
+labels_int =conv_all_labels()
 
 np.count_nonzero(labels_int==failed_code)
 
 labels_int[labels_int==failed_code]=0
 
-save_array(PATH+'results/labels_int.bc', labels_int)
+with open("labels_int.pickle", "wb") as pickle_out:
+    pickle.dump(labels_int, pickle_out)
 
-labels_int = load_array(PATH+'results/labels_int.bc')
+with open("labels_int.pickle", "rb") as pickle_in:
+    labels_int = pickle.load(pickle_in)
 
 #show result
 sg = segm_generator(imgs, labels, 4, train=True)
@@ -138,4 +138,3 @@ b_img, b_label = next(sg)
 plt.imshow(b_img[0]*0.3+0.4);
 
 plt.imshow(b_label[0].reshape(224,224,3));
-"""
