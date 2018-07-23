@@ -23,20 +23,20 @@ labels = np.stack([open_image(fn) for fn in lnames])
 print(imgs.shape,labels.shape)
 
 # write image and label vlaues into a file
-with open('imgs.bc', 'w') as file:
-    file.write(np.ndarray(imgs))
+with open('imgs.pickle', 'wb') as pickle_out:
+    pickle.dump(imgs, pickle_out)
 
-with open('labels.bc', 'w') as file:
-    file.write(np.ndarray(labels))
+with open('labels.pickle', 'wb') as pickle_out:
+    pickle.dump(labels,pickle_out)
 
 #read image and lable from the file
-with open('imgs.bc', 'r') as file:
-    imgs = file.read()
-    print("imgs loaded")
+with open('imgs.pickle','rb') as pickle_in:
+    pickle.load(pickle_in)
 
-with open('imgs.bc', 'r') as file:
-    labels = file.read()
-    print("label restored")
+with open('labels.pickle', 'rb') as pickle_in:
+    pickle.load(pickle_in)
+
+print("pickle part completed")
 #standardize
 imgs-=0.4
 imgs/=0.3
