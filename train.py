@@ -37,9 +37,10 @@ with open('labels.pickle', 'rb') as pickle_in:
     pickle.load(pickle_in)
 
 print("pickle part completed")
+print(type(imgs))
 #standardize
-imgs-=0.4
-imgs/=0.3
+#imgs-=0.4
+#imgs/=0.3
 
 """
 
