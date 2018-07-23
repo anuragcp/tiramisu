@@ -91,14 +91,14 @@ class segm_generator(object):
 
 ##converting labels
 
-def parse_code(l):
-    a,b = l.strip().split("\t")
-    return tuple(int(o) for o in a.split(' ')), b
+#def parse_code(l):
+#    a,b = l.strip('\n').split("\t")
+#    return tuple(int(o) for o in a.split(' ')), b
+#
+#label_codes,label_names = zip(*[
+#    parse_code(l) for l in open("./label_colors.txt")])
 
-label_codes,label_names = zip(*[
-    parse_code(l) for l in open("./label_colors.txt")])
-
-label_codes,label_names = list(label_codes),list(label_names)
+label_codes,label_names = [48.8, 10.7, 5.7], ["head"]
 
 code2id = {v:k for k,v in enumerate(label_codes)}
 
