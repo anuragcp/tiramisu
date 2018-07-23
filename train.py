@@ -1,4 +1,9 @@
 import keras
+from keras.layers import BatchNormalization
+from keras.layers import Activation
+from keras.layers import Dropout
+from keras.layers import Convolution2D
+from keras.layers import merge
 import matplotlib.pyplot as plt
 import numpy as np
 import threading
@@ -8,7 +13,7 @@ import random
 from PIL import Image
 import os
 import pickle
-import cv2 as cv
+#import cv2 as cv
 
 frames_path = './datasets/frames/'
 labels_path = './datasets/labels/'
@@ -139,9 +144,75 @@ with open("labels_int.pickle", "rb") as pickle_in:
 #show result
 sg = segm_generator(imgs, labels, 4, train=True)
 b_img, b_label = next(sg)
-plt.imshow(b_img[0]*0.3+0.4);
+plt.imshow(b_img[0]);
 
 plt.imshow(b_label[0].reshape(224,224));
+print(b_label[0])
 
-cv.imshow
+#preparing test set
+fn_test = set(o.strip() for o in open('test.txt','r'))
+is_test = np.array([o.split('/')[-1] in fn_test for o in fnames])
+trn = imgs[is_test==False]
+trn_labels = labels_int[is_test==False]
+test = imgs[is_test]
+test_labels = labels_int[is_test]
+print(trn.shape,test_labels.shape)
+rnd_trn = len(trn_labels)
+rnd_test = len(test_labels)
+
+#tiramisu network
+
+def relu(x): return Activation('relu')(x)
+def dropout(x, p): return Dropout(p)(x) if p else x
+def bn(x): return BatchNormalization(mode=2, axis=-1)(x)
+def relu_bn(x): return relu(bn(x))
+def concat(xs): return merge(xs, mode='concat', concat_axis=-1)
+
+def conv(x, nf, sz, wd, p, stride=1):
+    x = Convolution2D(nf, sz, sz, init='he_uniform', border_mode='same',
+                      subsample=(stride,stride), W_regularizer=l2(wd))(x)
+    return dropout(x, p)
+
+def conv_relu_bn(x, nf, sz=3, wd=0, p=0, stride=1):
+    return conv(relu_bn(x), nf, sz, wd=wd, p=p, stride=stride)
+
+def dense_block(n,x,growth_rate,p,wd):
+    added = []
+    for i in range(n):
+        b = conv_relu_bn(x, growth_rate, p=p, wd=wd)
+        x = concat([x, b])
+        added.append(b)
+    return x,added
+
+#Downsampling transition
+def transition_dn(x, p, wd):
+#     x = conv_relu_bn(x, x.get_shape().as_list()[-1], sz=1, p=p, wd=wd)
+#     return MaxPooling2D(strides=(2, 2))(x)
+    return conv_relu_bn(x, x.get_shape().as_list()[-1], sz=1, p=p, wd=wd, stride=2)
+
+#making downword path
+def down_path(x, nb_layers, growth_rate, p, wd):
+    skips = []
+    for i,n in enumerate(nb_layers):
+        x,added = dense_block(n,x,growth_rate,p,wd)
+        skips.append(x)
+        x = transition_dn(x, p=p, wd=wd)
+    return skips, added
+
+#Up sampling
+def transition_up(added, wd=0):
+    x = concat(added)
+    _,r,c,ch = x.get_shape().as_list()
+    return Deconvolution2D(ch, 3, 3, (None,r*2,c*2,ch), init='he_uniform',
+               border_mode='same', subsample=(2,2), W_regularizer=l2(wd))(x)
+#     x = UpSampling2D()(x)
+#     return conv(x, ch, 2, wd, 0)
+
+#Making upward path
+def up_path(added, skips, nb_layers, growth_rate, p, wd):
+    for i,n in enumerate(nb_layers):
+        x = transition_up(added, wd)
+        x = concat([x,skips[i]])
+        x,added = dense_block(n,x,growth_rate,p,wd)
+    return x
 
