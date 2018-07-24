@@ -11,6 +11,7 @@ from keras.regularizers import l2
 from keras.layers import Deconvolution2D
 from keras.layers import Input
 import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
 import numpy as np
 import threading
 from concurrent.futures import ProcessPoolExecutor
@@ -33,7 +34,6 @@ print(lnames[0:3])
 
 def open_image(fn): return np.array(Image.open(fn).resize(img_sz, Image.NEAREST))
 
-
 img = Image.open(fnames[0]).resize(img_sz, Image.NEAREST)
 # Image._show(img)
 imgs = np.stack([open_image(fn) for fn in fnames])
@@ -41,6 +41,12 @@ labels = np.stack([open_image(fn) for fn in lnames])
 print(imgs.shape, labels.shape)
 n = len(labels)
 r, c = img.size
+print(fnames)
+
+#train_terst split
+
+imgs, test, labels, test_labels = train_test_split(imgs, labels, test_size=0.2, random_state=32)
+print("train_test_split completed")
 
 # write image and label vlaues into a file
 with open('imgs.pickle', 'wb') as pickle_out:
@@ -160,6 +166,7 @@ with open("labels_int.pickle", "wb") as pickle_out:
 with open("labels_int.pickle", "rb") as pickle_in:
     labels_int = pickle.load(pickle_in)
 
+
 # show result
 sg = segm_generator(imgs, labels, 4, train=True)
 b_img, b_label = next(sg)
@@ -168,18 +175,7 @@ plt.imshow(b_img[0]);
 plt.imshow(b_label[0].reshape(224, 224));
 print(b_label[0])
 
-# preparing test set
-"""
-fn_test = set(o.strip() for o in open('test.txt', 'r'))
-is_test = np.array([o.split('/')[-1] in fn_test for o in fnames])
-trn = imgs[is_test == False]
-trn_labels = labels_int[is_test == False]
-test = imgs[is_test]
-test_labels = labels_int[is_test]
-print(trn.shape, test_labels.shape)
-rnd_trn = len(trn_labels)
-rnd_test = len(test_labels)
-"""
+x_train,x_test, y_train, y_test = train_test_split(b_img,b_label, test_size=.20, random_state=32)
 
 # tiramisu network
 
@@ -189,7 +185,7 @@ def relu(x): return Activation('relu')(x)
 def dropout(x, p): return Dropout(p)(x) if p else x
 
 
-def bn(x): return BatchNormalization(mode=2, axis=-1)(x)
+def bn(x): return BatchNormalization(axis=-1)(x)
 
 
 def relu_bn(x): return relu(bn(x))
@@ -281,16 +277,13 @@ input_shape = (224,224,3)
 img_input = Input(shape=input_shape)
 x = create_tiramisu(12, img_input, nb_layers_per_block=[4,5,7,10,12,15], p=0.2, wd=1e-4)
 model = Model(img_input, x)
-gen = segm_generator(imgs, labels, 3, train=True)
-#gen_test = segm_generator(test, test_labels, 3, train=False)
+gen = segm_generator(x_train, y_train, 3, train=True)
+gen_test = segm_generator(x_test, y_test, 3, train=False)
 model.compile(loss='sparse_categorical_crossentropy',
               optimizer=keras.optimizers.RMSprop(1e-3), metrics=["accuracy"])
 model.optimizer=keras.optimizers.RMSprop(1e-3, decay=1-0.99995)
 model.optimizer=keras.optimizers.RMSprop(1e-3)
 K.set_value(model.optimizer.lr, 1e-3)
-model.fit_generator(gen, len(labels), 100, verbose=2)
-
-#validation_data=gen_test, nb_val_samples=rnd_test
-
-
+model.fit_generator(gen, len(y_train), 100, verbose=2,
+                    validation_data=gen_test, nb_val_samples=len(y_test))
 
